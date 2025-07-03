@@ -1,5 +1,5 @@
 ## AStar Smooth Planner (ROS2 Jazzy)
-![mobo_bot_pic](.docs/smooth_test1.gif)
+![mobo_bot_pic](./docs/smooth_test1.gif)
 
 As the name implies, this is an imporved AStar Planner That produces straight smoothened path with minimal turns.
 it is optimized for getting the shortest possible path. It builds on the AStar Algorithm
