@@ -2,12 +2,11 @@
 
 import rclpy
 from rclpy.node import Node
-from nav_msgs.msg import OccupancyGrid, Path, MapMetaData
+from nav_msgs.msg import OccupancyGrid, Path
 from geometry_msgs.msg import PoseStamped, Pose
 from rclpy.qos import QoSProfile, DurabilityPolicy
 
 from queue import Queue
-import numpy as np
 
 class GridPose:
     def __init__(self, x=0, y=0):
@@ -16,11 +15,11 @@ class GridPose:
 
 
 
-class AStarSmoothner(Node):
+class AStarSmoother(Node):
     def __init__(self):
-        super().__init__("a_star_smoothner")
+        super().__init__("a_star_smoother")
 
-        self.declare_parameter("iterations", 20)
+        self.declare_parameter("iterations", 2)
         self.declare_parameter("cost_limit", 20)
         self.iterations = self.get_parameter("iterations").value
         self.cost_limit = self.get_parameter("cost_limit").value
@@ -37,7 +36,7 @@ class AStarSmoothner(Node):
         self.map_ = None
         self.path_ = None
 
-        self.get_logger().info("a_star_smoothner node has just started")
+        self.get_logger().info("a_star_smoother node has just started")
 
     def pose_to_grid(self, pose: Pose) -> GridPose:
         grid_x = int((pose.position.x - self.map_.info.origin.position.x) / self.map_.info.resolution)
@@ -80,7 +79,7 @@ class AStarSmoothner(Node):
     def smoothen_path(self, path: Path) -> Path:
         pose_to_grid = self.pose_to_grid
         grid_to_pose = self.grid_to_pose
-        bresenham = self.bresenham_line
+        # bresenham = self.bresenham_line
         smoothen_grid_path = self.smoothen_grid_path
 
         grid_pose_list = [pose_to_grid(pose.pose) for pose in path.poses]
@@ -88,16 +87,9 @@ class AStarSmoothner(Node):
         for _ in range(self.iterations):
             grid_pose_list = smoothen_grid_path(grid_pose_list)
 
-        new_grid_pose_list = []
-        new_grid_pose_list.append(grid_pose_list[0])
-        length = len(grid_pose_list)
-        for i in range(1, length):
-            line = bresenham(grid_pose_list[i-1], grid_pose_list[i])
-            new_grid_pose_list.extend(line[1:])
-
         new_path = Path()
         new_path.header.frame_id = self.map_.header.frame_id
-        for grid_pose in new_grid_pose_list:
+        for grid_pose in grid_pose_list:
             pose_stamped = PoseStamped()
             pose_stamped.header.frame_id = self.map_.header.frame_id
             pose_stamped.pose = grid_to_pose(grid_pose)
@@ -148,7 +140,13 @@ class AStarSmoothner(Node):
 
         new_grid_pose_list.append(goal_grid_pose)
 
-        return new_grid_pose_list
+        full_new_grid_pose_list = []
+        full_new_grid_pose_list.append(new_grid_pose_list[0])
+        length = len(new_grid_pose_list)
+        for i in range(1, length):
+            line = bresenham(new_grid_pose_list[i-1], new_grid_pose_list[i])
+            full_new_grid_pose_list.extend(line[1:])
+        return full_new_grid_pose_list
     
     def bresenham_line(self, start: GridPose, end: GridPose):
         line = []
@@ -194,7 +192,7 @@ class AStarSmoothner(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = AStarSmoothner()
+    node = AStarSmoother()
     rclpy.spin(node)
     rclpy.shutdown()
 
