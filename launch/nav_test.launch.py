@@ -47,6 +47,7 @@ def generate_launch_description():
   #-----------------------------------------------------------------------------
   rviz_config_file = os.path.join(pkg_path,'config','amcl.rviz')
 
+
   # create needed nodes or launch files
   rviz_node = Node(
       package='rviz2',
@@ -64,8 +65,8 @@ def generate_launch_description():
 
   a_star_smoothner_node = Node(
     package='a_star_smooth_planner',
-    executable='a_star_smoothner.py',
-    name='a_star_smoothner',
+    executable='a_star_smoother.py',
+    name='a_star_smoother',
     output='screen',
     parameters=[{'iterations': 10,
                  'cost_limit': 20

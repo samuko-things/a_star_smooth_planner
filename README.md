@@ -17,6 +17,8 @@ it is optimized for getting the shortest possible path. It builds on the AStar A
   git clone https://github.com/samuko-things/a_star_smooth_planner.git
   ```
 
+> NOTE: you might need to make the `a_star_planner.py` and `a_star_smoother.py` executable
+
 #
 
 ### Test the AStar Smooth Planner
@@ -30,3 +32,9 @@ it is optimized for getting the shortest possible path. It builds on the AStar A
   ```
 
 - use the **2D GoalPose** button in RVIZ to move the robot from point to point and see the planner at work.
+
+
+📚 Resources:
+- [Self-Driving Planning Course](https://www.udemy.com/share/10d4U53@J5jcGUgRzDALXhLAGOMWxU6dAnWoZ-g8zGFl1djv_uJFHfRN5X0qLnnhFUJ_xl7J/) by Antonio Brandi
+- [Improved AStar](https://www.sciencedirect.com/science/article/pii/S2468227621003690) by Dr. Oluwaseun Martins
+- [MoboBot](https://github.com/robocre8/mobo_bot) – developed by me under [robocre8](https://github.com/robocre8)
