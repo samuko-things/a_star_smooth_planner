@@ -19,6 +19,17 @@ it is optimized for getting the shortest possible path. It builds on the AStar A
 
 > NOTE: you might need to make the `a_star_planner.py` and `a_star_smoother.py` executable
 
+- cd into the root directory of your ros workspace and run rosdep to install all necessary ROS  package dependencies
+  ```shell
+  rosdep update
+  rosdep install --from-paths src --ignore-src -r -y
+  ```
+
+- Build your mobo_bot_ws
+  ```shell
+  colcon build --symlink-install
+  ```
+
 #
 
 ### Test the AStar Smooth Planner
