@@ -78,9 +78,9 @@ def generate_launch_description():
     executable='pure_pursuit',
     name='pure_pursuit',
     output='screen',
-    parameters=[{'look_ahead_distance': 0.4,
-                 'max_linear_velocity': 0.3,
-                 'max_angular_velocity': 0.6,
+    parameters=[{'look_ahead_distance': 0.3,
+                 'max_linear_velocity': 0.125,
+                 'max_angular_velocity': 0.7,
                  'path_topic': '/a_star/path/smooth'
                  }],
     remappings=[('/cmd_vel', '/cmd_vel_nav')],
