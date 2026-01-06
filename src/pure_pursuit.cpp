@@ -2,9 +2,10 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "std_msgs/msg/header.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer.h"
 
@@ -35,7 +36,7 @@ public:
       path_sub_ = create_subscription<nav_msgs::msg::Path>(
         path_topic_, 10, std::bind(&PurePursuit::pathCallback, this, std::placeholders::_1));
             
-      cmd_pub_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
+      cmd_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel", 10);
 
       carrot_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("/pure_pursuit/carrot", 10);
       control_loop_ = create_wall_timer(
@@ -47,7 +48,7 @@ public:
 private:
     rclcpp::TimerBase::SharedPtr control_loop_;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub_;
-    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_pub_;
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr carrot_pub_;
     
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -95,9 +96,18 @@ private:
         RCLCPP_INFO(get_logger(), "Goal Reached!");
         global_plan_.poses.clear();
         // Create and publish the velocity command
-        geometry_msgs::msg::Twist cmd_vel;
-        cmd_vel.linear.x = 0.0;
-        cmd_vel.angular.z = 0.0;
+        geometry_msgs::msg::TwistStamped cmd_vel;
+
+        cmd_vel.header.stamp = this->get_clock()->now();
+        cmd_vel.header.frame_id = "odom";
+
+        cmd_vel.twist.linear.x  = 0.0;
+        cmd_vel.twist.linear.y  = 0.0;
+        cmd_vel.twist.linear.z  = 0.0;
+
+        cmd_vel.twist.angular.x = 0.0;
+        cmd_vel.twist.angular.y = 0.0;
+        cmd_vel.twist.angular.z = 0.0;
 
         cmd_pub_->publish(cmd_vel);
         return;
@@ -114,9 +124,18 @@ private:
       double curvature = getCurvature(carrot_pose.pose);
                 
       // Create and publish the velocity command
-      geometry_msgs::msg::Twist cmd_vel;
-      cmd_vel.linear.x = max_linear_velocity_;
-      cmd_vel.angular.z = curvature * max_angular_velocity_;
+      geometry_msgs::msg::TwistStamped cmd_vel;
+
+      cmd_vel.header.stamp = this->get_clock()->now();
+      cmd_vel.header.frame_id = "odom";
+
+      cmd_vel.twist.linear.x  = max_linear_velocity_;
+      cmd_vel.twist.linear.y  = 0.0;
+      cmd_vel.twist.linear.z  = 0.0;
+
+      cmd_vel.twist.angular.x = 0.0;
+      cmd_vel.twist.angular.y = 0.0;
+      cmd_vel.twist.angular.z = curvature * max_angular_velocity_;
 
       cmd_pub_->publish(cmd_vel);
     }

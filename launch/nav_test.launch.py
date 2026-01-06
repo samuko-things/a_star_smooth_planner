@@ -83,6 +83,7 @@ def generate_launch_description():
                  'max_angular_velocity': 0.6,
                  'path_topic': '/a_star/path/smooth'
                  }],
+    remappings=[('/cmd_vel', '/cmd_vel_nav')],
   )
 
   lifecycle_nodes = [
