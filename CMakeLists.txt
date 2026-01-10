@@ -29,8 +29,12 @@ set(dependencies
 add_executable(pure_pursuit src/pure_pursuit.cpp)
 ament_target_dependencies(pure_pursuit ${dependencies})
 
+add_executable(a_star_smoother src/a_star_smoother.cpp)
+ament_target_dependencies(a_star_smoother ${dependencies})
+
 install(TARGETS
   pure_pursuit
+  a_star_smoother
   DESTINATION lib/${PROJECT_NAME}
 )
 #-----------------------------------------------------

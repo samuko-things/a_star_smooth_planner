@@ -65,10 +65,10 @@ def generate_launch_description():
 
   a_star_smoothner_node = Node(
     package='a_star_smooth_planner',
-    executable='a_star_smoother.py',
+    executable='a_star_smoother',
     name='a_star_smoother',
     output='screen',
-    parameters=[{'iterations': 10,
+    parameters=[{'iterations': 5,
                  'cost_limit': 20
                  }],
   )
@@ -79,8 +79,8 @@ def generate_launch_description():
     name='pure_pursuit',
     output='screen',
     parameters=[{'look_ahead_distance': 0.3,
-                 'max_linear_velocity': 0.125,
-                 'max_angular_velocity': 0.7,
+                 'max_linear_velocity': 0.2,
+                 'max_angular_velocity': 1.0,
                  'path_topic': '/a_star/path/smooth'
                  }],
     remappings=[('/cmd_vel', '/cmd_vel_nav')],
