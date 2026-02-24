@@ -25,7 +25,7 @@ public:
   AStarSmoother()
   : Node("a_star_smoother")
   {
-    declare_parameter<int>("iterations", 2);
+    declare_parameter<int>("iterations", 10);
     declare_parameter<int>("cost_limit", 20);
 
     iterations_  = get_parameter("iterations").as_int();
@@ -35,15 +35,15 @@ public:
     map_qos.transient_local();
 
     map_sub_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
-      "/costmap", map_qos,
+      "/global_costmap/costmap", map_qos,
       std::bind(&AStarSmoother::mapCallback, this, _1));
 
     path_sub_ = create_subscription<nav_msgs::msg::Path>(
-      "/a_star/path", 10,
+      "/plan", 10,
       std::bind(&AStarSmoother::pathCallback, this, _1));
 
     path_pub_ = create_publisher<nav_msgs::msg::Path>(
-      "/a_star/path/smooth", 10);
+      "/plan_smoothed", 10);
 
     RCLCPP_INFO(get_logger(), "A* LOS smoother started");
   }
@@ -54,10 +54,12 @@ private:
   void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
   {
     map_ = msg;
+    RCLCPP_INFO(get_logger(), "Global Costmap received");
   }
 
   void pathCallback(const nav_msgs::msg::Path::SharedPtr msg)
   {
+    RCLCPP_INFO(get_logger(), "path received");
     if (!map_) {
       RCLCPP_ERROR(get_logger(), "No costmap received");
       return;

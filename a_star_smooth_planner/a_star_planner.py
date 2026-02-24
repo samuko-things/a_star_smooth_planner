@@ -7,7 +7,7 @@ from geometry_msgs.msg import PoseStamped, Pose
 from rclpy.qos import QoSProfile, DurabilityPolicy
 from tf2_ros import Buffer, TransformListener, LookupException
 from queue import PriorityQueue
-from math import sqrt, pow
+from math import sqrt, pow, hypot, acos, degrees
 
 class GraphNode:
     def __init__(self, x, y, cost=0, heuristic=0, prev=None):
@@ -86,6 +86,7 @@ class AStarPlanner(Node):
             self.get_logger().warn("No path found to the goal.")
 
     def plan(self, start: Pose, goal: Pose):
+        
         # Define possible movement directions
         explore_directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
@@ -95,6 +96,7 @@ class AStarPlanner(Node):
 
         start_node = self.world_to_grid(start)
         goal_node = self.world_to_grid(goal)
+        # start_node.heuristic = self.manhattan_distance(start_node, goal_node)
         start_node.heuristic = self.euclidean_distance(start_node, goal_node)
         pending_nodes.put(start_node)
 
@@ -113,7 +115,8 @@ class AStarPlanner(Node):
                     0 <= self.map_.data[self.pose_to_cell(new_node)] < 99):
                     
                     new_node.cost = active_node.cost + 1 + self.map_.data[self.pose_to_cell(new_node)]
-                    new_node.heuristic = self.manhattan_distance(new_node, goal_node)
+                    # new_node.heuristic = self.manhattan_distance(new_node, goal_node)
+                    new_node.heuristic = self.euclidean_distance(new_node, goal_node)
                     new_node.prev = active_node
 
                     pending_nodes.put(new_node)
@@ -157,6 +160,20 @@ class AStarPlanner(Node):
 
     def pose_to_cell(self, node: GraphNode):
         return node.y * self.map_.info.width + node.x
+    
+    def check_angle(p0, p1, p2):
+        a = hypot(p0[0]-p1[0], p0[1]-p1[1])
+        b = hypot(p1[0]-p2[0], p1[1]-p2[1])
+        c = hypot(p0[0]-p2[0], p0[1]-p2[1])
+
+        angle = (a**2 + b**2 - c**2)/(2*a*b)
+        if angle>1:
+            angle = 1
+        elif angle < -1:
+            angle = -1
+        angle = degrees(acos(angle))
+
+        return round(angle)
 
 
 def main(args=None):

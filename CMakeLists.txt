@@ -29,12 +29,12 @@ set(dependencies
 add_executable(pure_pursuit src/pure_pursuit.cpp)
 ament_target_dependencies(pure_pursuit ${dependencies})
 
-add_executable(a_star_smoother src/a_star_smoother.cpp)
-ament_target_dependencies(a_star_smoother ${dependencies})
+add_executable(a_star_smoother_test src/a_star_smoother_test.cpp)
+ament_target_dependencies(a_star_smoother_test ${dependencies})
 
 install(TARGETS
   pure_pursuit
-  a_star_smoother
+  a_star_smoother_test
   DESTINATION lib/${PROJECT_NAME}
 )
 #-----------------------------------------------------
@@ -44,6 +44,7 @@ install(TARGETS
 ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
+  ${PROJECT_NAME}/theta_star_planner.py
   ${PROJECT_NAME}/a_star_planner.py
   ${PROJECT_NAME}/a_star_smoother.py
   DESTINATION lib/${PROJECT_NAME}

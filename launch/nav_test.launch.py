@@ -56,22 +56,32 @@ def generate_launch_description():
       output='screen'
   )
 
-  a_star_planner_node = Node(
-    package='a_star_smooth_planner',
-    executable='a_star_planner.py',
-    name='a_star_planner',
-    output='screen',
-  )
+  # planner_node = Node(
+  #   package='a_star_smooth_planner',
+  #   executable='a_star_planner.py',
+  #   name='a_star_planner',
+  #   output='screen',
+  # )
 
-  a_star_smoothner_node = Node(
+  planner_node = Node(
     package='a_star_smooth_planner',
-    executable='a_star_smoother',
-    name='a_star_smoother',
+    executable='theta_star_planner.py',
+    name='theta_star_planner',
     output='screen',
-    parameters=[{'iterations': 5,
+    parameters=[{
                  'cost_limit': 20
                  }],
   )
+
+  # smoothner_node = Node(
+  #   package='a_star_smooth_planner',
+  #   executable='a_star_smoother.py',
+  #   name='a_star_smoother',
+  #   output='screen',
+  #   parameters=[{'iterations': 1,
+  #                'cost_limit': 20
+  #                }],
+  # )
 
   pure_pursuit_node = Node(
     package='a_star_smooth_planner',
@@ -81,7 +91,7 @@ def generate_launch_description():
     parameters=[{'look_ahead_distance': 0.3,
                  'max_linear_velocity': 0.2,
                  'max_angular_velocity': 1.0,
-                 'path_topic': '/a_star/path/smooth'
+                 'path_topic': '/theta_star/path'
                  }],
     remappings=[('/cmd_vel', '/cmd_vel_nav')],
   )
@@ -139,8 +149,8 @@ def generate_launch_description():
  
   # Add the nodes to the launch description
   ld.add_action(rviz_node)
-  ld.add_action(a_star_planner_node)
-  ld.add_action(a_star_smoothner_node)
+  ld.add_action(planner_node)
+  # ld.add_action(smoothner_node)
   ld.add_action(pure_pursuit_node)
   ld.add_action(nav2_map_server_node)
   ld.add_action(nav2_costmap_2d_node)

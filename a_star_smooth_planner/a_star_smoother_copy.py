@@ -7,6 +7,7 @@ from geometry_msgs.msg import PoseStamped, Pose
 from rclpy.qos import QoSProfile, DurabilityPolicy
 
 from queue import Queue
+from math import hypot, acos, degrees
 
 class GridPose:
     def __init__(self, x=0, y=0):
@@ -19,7 +20,7 @@ class AStarSmoother(Node):
     def __init__(self):
         super().__init__("a_star_smoother")
 
-        self.declare_parameter("iterations", 20)
+        self.declare_parameter("iterations", 2)
         self.declare_parameter("cost_limit", 20)
         self.iterations = self.get_parameter("iterations").value
         self.cost_limit = self.get_parameter("cost_limit").value
@@ -35,6 +36,7 @@ class AStarSmoother(Node):
 
         self.map_ = None
         self.path_ = None
+        self.map_resolution_ = None
 
         self.get_logger().info("a_star_smoother node has just started")
 
@@ -64,14 +66,34 @@ class AStarSmoother(Node):
     
     def map_callback(self, map_msg: OccupancyGrid):
         self.map_ = map_msg
+        self.map_resolution_ = map_msg.info.resolution
+        print("map_resolution: ", self.map_resolution_)
 
     def path_callback(self, path_msg: Path):
         if (self.map_ == None):
             self.get_logger().error("No Map data received")
-        
+
         self.get_logger().info("Path received")
         self.path_ = path_msg
         new_path = self.smoothen_path(self.path_)
+
+
+        # grid_pose_list = [self.pose_to_grid(pose.pose) for pose in new_path.poses]
+        # pose_angle_list = []
+        # prev1_pose = None; prev2_pose = None; current_pose = None
+        # for pose in grid_pose_list:
+        #     current_pose = pose
+        #     if prev1_pose == None or prev2_pose == None or current_pose == None:
+        #         prev2_pose = prev1_pose
+        #         prev1_pose = current_pose
+        #         continue
+            
+        #     angle = self.check_angle([prev2_pose.x, prev2_pose.y], [prev1_pose.x, prev1_pose.y], [current_pose.x, current_pose.y])
+        #     pose_angle_list.append(angle)
+        #     prev2_pose = prev1_pose
+        #     prev1_pose = current_pose
+
+        # self.get_logger().info(f'pose_angle_list = {pose_angle_list}')
         
         self.path_pub.publish(new_path)
         self.get_logger().info('smoothned a_star path published')
@@ -79,24 +101,34 @@ class AStarSmoother(Node):
     def smoothen_path(self, path: Path) -> Path:
         pose_to_grid = self.pose_to_grid
         grid_to_pose = self.grid_to_pose
-        bresenham = self.bresenham_line
+        # bresenham = self.bresenham_line
         smoothen_grid_path = self.smoothen_grid_path
 
         grid_pose_list = [pose_to_grid(pose.pose) for pose in path.poses]
 
+        pose_angle_list = []
+        prev1_pose = None; prev2_pose = None; current_pose = None
+        for pose in grid_pose_list:
+            current_pose = pose
+            if prev1_pose == None or prev2_pose == None or current_pose == None:
+                prev2_pose = prev1_pose
+                prev1_pose = current_pose
+                continue
+            
+            angle = self.check_angle([prev2_pose.x, prev2_pose.y], [prev1_pose.x, prev1_pose.y], [current_pose.x, current_pose.y])
+            pose_angle_list.append(angle)
+            prev2_pose = prev1_pose
+            prev1_pose = current_pose
+
+        self.get_logger().info(f'pose_angle_list = {pose_angle_list}')
+            
+
         for _ in range(self.iterations):
             grid_pose_list = smoothen_grid_path(grid_pose_list)
 
-        new_grid_pose_list = []
-        new_grid_pose_list.append(grid_pose_list[0])
-        length = len(grid_pose_list)
-        for i in range(1, length):
-            line = bresenham(grid_pose_list[i-1], grid_pose_list[i])
-            new_grid_pose_list.extend(line[1:])
-
         new_path = Path()
         new_path.header.frame_id = self.map_.header.frame_id
-        for grid_pose in new_grid_pose_list:
+        for grid_pose in grid_pose_list:
             pose_stamped = PoseStamped()
             pose_stamped.header.frame_id = self.map_.header.frame_id
             pose_stamped.pose = grid_to_pose(grid_pose)
@@ -147,7 +179,30 @@ class AStarSmoother(Node):
 
         new_grid_pose_list.append(goal_grid_pose)
 
-        return new_grid_pose_list
+        full_new_grid_pose_list = []
+        full_new_grid_pose_list.append(new_grid_pose_list[0])
+        length = len(new_grid_pose_list)
+        for i in range(1, length):
+            line = bresenham(new_grid_pose_list[i-1], new_grid_pose_list[i])
+            full_new_grid_pose_list.extend(line[1:])
+        return full_new_grid_pose_list
+    
+    # def bresenham_line(self, start: GridPose, end: GridPose):
+    #     line = []
+
+    #     x0, y0, x1, y1 = start.x, start.y, end.x, end.y
+
+    #     no_of_iter = int(hypot((x1-x0),(y1-y0)) / self.map_resolution_)
+    #     x_increment = (x1-x0)/no_of_iter
+    #     y_increment = (y1-y0)/no_of_iter
+
+    #     for i in range(no_of_iter):
+    #         pose_x = x0+(x_increment*i)
+    #         pose_y = y0+(y_increment*i)
+    #         line.append(GridPose(int(pose_x), int(pose_y)))
+    #     line.append(GridPose(x1, y1))
+    #     return line
+        
     
     def bresenham_line(self, start: GridPose, end: GridPose):
         line = []
@@ -188,6 +243,20 @@ class AStarSmoother(Node):
             D += 2 * dy
 
         return line
+    
+    def check_angle(self, p0, p1, p2):
+        a = hypot(p0[0]-p1[0], p0[1]-p1[1])
+        b = hypot(p1[0]-p2[0], p1[1]-p2[1])
+        c = hypot(p0[0]-p2[0], p0[1]-p2[1])
+
+        angle = (a**2 + b**2 - c**2)/(2*a*b)
+        if angle>1:
+            angle = 1
+        elif angle < -1:
+            angle = -1
+        angle = degrees(acos(angle))
+
+        return round(angle)
 
 
 
