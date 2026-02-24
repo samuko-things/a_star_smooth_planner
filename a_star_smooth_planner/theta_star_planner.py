@@ -160,8 +160,8 @@ class ThetaStarPlanner(Node):
                     open_set.put(neighbor)
 
             # Visualization (optional)
-            self.visited_map_.data[self.pose_to_cell(current)] = -106
-            self.map_pub.publish(self.visited_map_)
+            # self.visited_map_.data[self.pose_to_cell(current)] = -106
+            # self.map_pub.publish(self.visited_map_)
 
         # -------- Path Reconstruction --------
         path = Path()
@@ -267,34 +267,33 @@ class ThetaStarPlanner(Node):
         return not crosses   # ← THIS is the fix
     
     def add_straight_line_poses(self, start_pose: PoseStamped, end_pose: PoseStamped, resolution):
-
         poses = []
 
         dx = end_pose.pose.position.x - start_pose.pose.position.x
         dy = end_pose.pose.position.y - start_pose.pose.position.y
-
         distance = hypot(dx, dy)
 
-        no_of_iter = max(1, int(distance / resolution))
+        if distance == 0:
+            return []
+
+        no_of_iter = int(distance / resolution)
+
+        if no_of_iter == 0:
+            return []
 
         x_increment = dx / no_of_iter
         y_increment = dy / no_of_iter
 
         for i in range(no_of_iter):
-            new_pose = PoseStamped()
-            new_pose.header.frame_id = start_pose.header.frame_id
+            pose = PoseStamped()   # ← NEW OBJECT EACH TIME
+            pose.header.frame_id = start_pose.header.frame_id
+            pose.pose.position.x = start_pose.pose.position.x + x_increment * i
+            pose.pose.position.y = start_pose.pose.position.y + y_increment * i
+            pose.pose.orientation = start_pose.pose.orientation
+            poses.append(pose)
 
-            new_pose.pose.position.x = start_pose.pose.position.x + (x_increment * i)
-            new_pose.pose.position.y = start_pose.pose.position.y + (y_increment * i)
-            new_pose.pose.orientation = start_pose.pose.orientation
-
-            poses.append(new_pose)
-
-        # add exact end pose
-        end_copy = PoseStamped()
-        end_copy.header.frame_id = end_pose.header.frame_id
-        end_copy.pose = end_pose.pose
-        poses.append(end_copy)
+        # Add exact end pose
+        poses.append(end_pose)
 
         return poses
     
